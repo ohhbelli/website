@@ -386,8 +386,8 @@
       }
     }
     ctx.putImageData(img, 0, 0);
-    const url = c.toDataURL();
-    document.querySelectorAll('.fog').forEach((f) => { f.style.backgroundImage = `url(${url})`; });
+    const url = c.toDataURL('image/webp', .6);
+    document.documentElement.style.setProperty('--fog-url', `url(${url})`);
   })();
 
   /* =======================================================
@@ -454,103 +454,120 @@
     return out;
   }
 
+  // Himmel (statisch) und Effekte (animiert) sind getrennt: der Himmel wird nur bei Größenänderung gezeichnet.
+  const FDPR = 1;                                  // Effekt-Ebene braucht keine Retina-Auflösung
   function sizeCanvases() {
     W = innerWidth; H = innerHeight;
-    [sky, fx].forEach((c) => { c.width = Math.round(W * DPR); c.height = Math.round(H * DPR); });
+    sky.width = Math.round(W * DPR); sky.height = Math.round(H * DPR);
+    fx.width = Math.round(W * FDPR); fx.height = Math.round(H * FDPR);
     sctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    fctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    fctx.setTransform(FDPR, 0, 0, FDPR, 0, 0);
     const mr = Math.max(20, Math.min(W, H) * .052);
     const mimg = makeMoon(mr);
-    moon = { img: mimg, size: mimg.width / DPR, r: mr, x: W * (small ? .8 : .84), y: H * (small ? .17 : .17) };
+    moon = { img: mimg, size: mimg.width / DPR, r: mr, x: W * (small ? .8 : .84), y: H * .17 };
     const r = rng(2024);
-    const count = Math.min(small ? 180 : 420, Math.round(W * H / 3800));
-    stars = Array.from({ length: count }, () => {
+    const count = Math.min(small ? 150 : 360, Math.round(W * H / 4200));
+    stars = Array.from({ length: count }, (_, i) => {
       const y = Math.pow(r(), 1.6) * H;              // oben dichter
-      return { x: r() * W, y, s: r() < .05 ? lerp(1.4, 2.2, r()) : lerp(.3, 1.1, r()), p: r() * TAU, v: lerp(.4, 2.2, r()), tint: r() };
+      return { x: r() * W, y, s: r() < .05 ? lerp(1.4, 2.2, r()) : lerp(.3, 1.1, r()), p: r() * TAU, v: lerp(.4, 2.2, r()), tint: r(), tw: !reduce && i % 6 === 0 };
     });
-    glimmers = Array.from({ length: small ? 14 : 30 }, () => ({
+    glimmers = Array.from({ length: small ? 8 : 18 }, () => ({
       x: r() * W, y: lerp(.45, 1, r()) * H, p: r() * TAU, v: lerp(.2, .6, r()), c: r() < .7 ? PALETTE.mint.rgb : PALETTE.gold.rgb,
     }));
+    drawSkyStatic();
   }
-  sizeCanvases();
-  addEventListener('resize', () => { if (Math.abs(innerHeight - H) > 120 || innerWidth !== W) sizeCanvases(); });
+
+  function starColor(s, a) {
+    return s.tint < .15 ? `rgba(255,236,190,${a})` : s.tint < .3 ? `rgba(190,255,235,${a})` : `rgba(235,245,255,${a})`;
+  }
+  function drawStar(c, s, a) {
+    c.fillStyle = starColor(s, a);
+    if (s.s > 1.3) {
+      c.strokeStyle = c.fillStyle; c.lineWidth = .6;
+      const l = s.s * 3.2 * a;
+      c.beginPath(); c.moveTo(s.x - l, s.y); c.lineTo(s.x + l, s.y); c.moveTo(s.x, s.y - l); c.lineTo(s.x, s.y + l); c.stroke();
+    }
+    c.beginPath(); c.arc(s.x, s.y, s.s, 0, TAU); c.fill();
+  }
+
+  function drawSkyStatic() {
+    const g = sctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#010309'); g.addColorStop(.55, '#031010'); g.addColorStop(1, '#06150f');
+    sctx.fillStyle = g; sctx.fillRect(0, 0, W, H);
+    let rg = sctx.createRadialGradient(W * .3, H * .25, 0, W * .3, H * .25, W * .55);
+    rg.addColorStop(0, 'rgba(60,170,140,.10)'); rg.addColorStop(1, 'rgba(60,170,140,0)');
+    sctx.fillStyle = rg; sctx.fillRect(0, 0, W, H);
+    rg = sctx.createRadialGradient(W * .75, H * .4, 0, W * .75, H * .4, W * .45);
+    rg.addColorStop(0, 'rgba(130,100,210,.08)'); rg.addColorStop(1, 'rgba(130,100,210,0)');
+    sctx.fillStyle = rg; sctx.fillRect(0, 0, W, H);
+    for (const s of stars) if (!s.tw) drawStar(sctx, s, .8);
+    // Mond (ohne schwarze Scheibe)
+    const glow = sctx.createRadialGradient(moon.x, moon.y, moon.r * .8, moon.x, moon.y, moon.r * 6.5);
+    glow.addColorStop(0, 'rgba(225,238,255,.17)'); glow.addColorStop(.4, 'rgba(190,215,245,.06)'); glow.addColorStop(1, 'rgba(190,215,245,0)');
+    sctx.fillStyle = glow; sctx.beginPath(); sctx.arc(moon.x, moon.y, moon.r * 6.5, 0, TAU); sctx.fill();
+    sctx.drawImage(moon.img, moon.x - moon.size / 2, moon.y - moon.size / 2, moon.size, moon.size);
+  }
+
+  // Vorgerenderte Leucht-Sprites statt Verläufe pro Frame
+  const sprites = new Map();
+  function glowSprite(rgb) {
+    const k = rgb.join();
+    let c = sprites.get(k);
+    if (c) return c;
+    c = document.createElement('canvas'); c.width = c.height = 64;
+    const g = c.getContext('2d');
+    const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gr.addColorStop(0, `rgba(${k},.65)`); gr.addColorStop(.35, `rgba(${k},.18)`); gr.addColorStop(1, `rgba(${k},0)`);
+    g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+    sprites.set(k, c); return c;
+  }
 
   const fr = rng(77);
   // Glühwürmchen: warmes Gelbgrün, Mint, Gold, ein Hauch Violett
-  const flyColors = [[236, 255, 150], [141, 255, 224], [255, 226, 140], [200, 255, 170], [201, 178, 255], [236, 255, 150], [141, 255, 224], [255, 226, 140], [200, 255, 170]];
-  fairies = flyColors.slice(0, small ? 5 : 9).map((rgb, i) => ({
+  const flyColors = [[236, 255, 150], [141, 255, 224], [255, 226, 140], [200, 255, 170], [201, 178, 255], [236, 255, 150], [141, 255, 224], [255, 226, 140]];
+  fairies = flyColors.slice(0, small ? 4 : 8).map((rgb, i) => ({
     rgb, a1: lerp(.04, .1, fr()), a2: lerp(.06, .14, fr()), b1: lerp(.07, .15, fr()), b2: lerp(.2, .4, fr()),
     p1: fr() * TAU, p2: fr() * TAU, p3: fr() * TAU, blink: lerp(.5, 1.1, fr()), bp: fr() * TAU,
     size: lerp(.7, 1.15, fr()), flap: lerp(36, 52, fr()), x: 0, y: 0, i,
   }));
 
-  let shooting = null, nextShoot = 3 + Math.random() * 6;
+  sizeCanvases();
+  let rzT;
+  addEventListener('resize', () => {
+    if (Math.abs(innerHeight - H) <= 120 && innerWidth === W) return;
+    clearTimeout(rzT); rzT = setTimeout(sizeCanvases, 150);
+  });
 
-  function drawSky(t) {
-    const g = sctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, '#010309'); g.addColorStop(.55, '#031010'); g.addColorStop(1, '#06150f');
-    sctx.fillStyle = g; sctx.fillRect(0, 0, W, H);
+  let shooting = null, nextShoot = 4 + Math.random() * 8;
 
-    // Polarlicht-artiger Schimmer
-    const ax = W * (.3 + .1 * Math.sin(t * .05)), ay = H * .25;
-    let rg = sctx.createRadialGradient(ax, ay, 0, ax, ay, W * .55);
-    rg.addColorStop(0, 'rgba(60,170,140,.10)'); rg.addColorStop(1, 'rgba(60,170,140,0)');
-    sctx.fillStyle = rg; sctx.fillRect(0, 0, W, H);
-    const bx = W * (.75 + .08 * Math.cos(t * .04)), by = H * .4;
-    rg = sctx.createRadialGradient(bx, by, 0, bx, by, W * .45);
-    rg.addColorStop(0, 'rgba(130,100,210,.08)'); rg.addColorStop(1, 'rgba(130,100,210,0)');
-    sctx.fillStyle = rg; sctx.fillRect(0, 0, W, H);
-
-    // Sterne
-    for (const s of stars) {
-      const tw = reduce ? .8 : .55 + .45 * Math.sin(t * s.v + s.p);
-      const col = s.tint < .15 ? `rgba(255,236,190,${tw})` : s.tint < .3 ? `rgba(190,255,235,${tw})` : `rgba(235,245,255,${tw})`;
-      sctx.fillStyle = col;
-      if (s.s > 1.3) {
-        sctx.globalAlpha = tw;
-        sctx.strokeStyle = col; sctx.lineWidth = .6;
-        const l = s.s * 3.2 * tw;
-        sctx.beginPath(); sctx.moveTo(s.x - l, s.y); sctx.lineTo(s.x + l, s.y); sctx.moveTo(s.x, s.y - l); sctx.lineTo(s.x, s.y + l); sctx.stroke();
-        sctx.globalAlpha = 1;
-      }
-      sctx.beginPath(); sctx.arc(s.x, s.y, s.s, 0, TAU); sctx.fill();
+  function drawDynamicSky(t, dt) {
+    for (const s of stars) if (s.tw) drawStar(fctx, s, .55 + .45 * Math.sin(t * s.v + s.p));
+    if (reduce) return;
+    if (!shooting && t > nextShoot) {
+      shooting = { x: Math.random() * W * .7, y: Math.random() * H * .3, vx: 9 + Math.random() * 5, vy: 3 + Math.random() * 2, life: 1 };
+      nextShoot = t + 8 + Math.random() * 12;
     }
-
-    // Mond (nach den Sternen, ohne schwarze Scheibe)
-    if (moon) {
-      const glow = sctx.createRadialGradient(moon.x, moon.y, moon.r * .8, moon.x, moon.y, moon.r * 6.5);
-      glow.addColorStop(0, 'rgba(225,238,255,.17)'); glow.addColorStop(.4, 'rgba(190,215,245,.06)'); glow.addColorStop(1, 'rgba(190,215,245,0)');
-      sctx.fillStyle = glow; sctx.beginPath(); sctx.arc(moon.x, moon.y, moon.r * 6.5, 0, TAU); sctx.fill();
-      sctx.drawImage(moon.img, moon.x - moon.size / 2, moon.y - moon.size / 2, moon.size, moon.size);
-    }
-
-    // Sternschnuppe
-    if (!reduce) {
-      if (!shooting && t > nextShoot) {
-        shooting = { x: Math.random() * W * .7, y: Math.random() * H * .3, vx: 9 + Math.random() * 5, vy: 3 + Math.random() * 2, life: 1 };
-        nextShoot = t + 6 + Math.random() * 10;
-      }
-      if (shooting) {
-        const s = shooting;
-        const lg = sctx.createLinearGradient(s.x, s.y, s.x - s.vx * 12, s.y - s.vy * 12);
-        lg.addColorStop(0, `rgba(255,255,255,${s.life})`); lg.addColorStop(1, 'rgba(255,255,255,0)');
-        sctx.strokeStyle = lg; sctx.lineWidth = 1.4;
-        sctx.beginPath(); sctx.moveTo(s.x, s.y); sctx.lineTo(s.x - s.vx * 12, s.y - s.vy * 12); sctx.stroke();
-        s.x += s.vx; s.y += s.vy; s.life -= .018;
-        if (s.life <= 0) shooting = null;
-      }
+    if (shooting) {
+      const s = shooting;
+      const lg = fctx.createLinearGradient(s.x, s.y, s.x - s.vx * 12, s.y - s.vy * 12);
+      lg.addColorStop(0, `rgba(255,255,255,${s.life})`); lg.addColorStop(1, 'rgba(255,255,255,0)');
+      fctx.strokeStyle = lg; fctx.lineWidth = 1.4;
+      fctx.beginPath(); fctx.moveTo(s.x, s.y); fctx.lineTo(s.x - s.vx * 12, s.y - s.vy * 12); fctx.stroke();
+      s.x += s.vx * dt; s.y += s.vy * dt; s.life -= .018 * dt;
+      if (s.life <= 0) shooting = null;
     }
   }
 
   /* --- Feenstaub --- */
+  const MAXDUST = 140;
   function spawn(x, y, rgb, n = 1, burst = 0) {
     for (let i = 0; i < n; i++) {
-      if (dust.length > 700) dust.shift();
+      if (dust.length >= MAXDUST) dust.shift();
       const a = Math.random() * TAU, sp = burst ? Math.random() * burst : Math.random() * .4;
       dust.push({
         x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - (burst ? .5 : 0),
         life: 1, decay: lerp(.006, .016, Math.random()), s: lerp(.5, 2, Math.random()),
-        star: Math.random() < .18, rgb: rgb || PALETTE.gold.rgb, p: Math.random() * TAU,
+        rgb: rgb || PALETTE.gold.rgb, p: Math.random() * TAU,
       });
     }
   }
@@ -559,98 +576,101 @@
     const x = W * (.5 + .46 * Math.sin(t * f.a1 + f.p1) * Math.cos(t * f.a2 * .7 + f.p2)) + Math.sin(t * 2.3 + f.i) * 5;
     const y = H * (.46 + .36 * Math.sin(t * f.b1 + f.p3)) + Math.sin(t * f.b2 * 5 + f.i) * 9;
     f.x = x; f.y = y;
-    const [r, g, b] = f.rgb;
     const s = f.size;
-    // sanftes Aufleuchten wie bei Glühwürmchen
-    const pulse = Math.pow(Math.max(0, Math.sin(t * f.blink + f.bp)), 2);
+    const pulse = Math.pow(Math.max(0, Math.sin(t * f.blink + f.bp)), 2);   // sanftes Aufleuchten
     const a = reduce ? .8 : .22 + .78 * pulse;
-
-    const halo = fctx.createRadialGradient(x, y, 0, x, y, 20 * s);
-    halo.addColorStop(0, `rgba(${r},${g},${b},${.6 * a})`);
-    halo.addColorStop(.35, `rgba(${r},${g},${b},${.16 * a})`);
-    halo.addColorStop(1, `rgba(${r},${g},${b},0)`);
-    fctx.fillStyle = halo; fctx.beginPath(); fctx.arc(x, y, 20 * s, 0, TAU); fctx.fill();
-
-    // winzige Flügel – nur zwei schnelle Striche
+    const R = 20 * s;
+    fctx.globalAlpha = Math.min(1, a);
+    fctx.drawImage(glowSprite(f.rgb), x - R, y - R, R * 2, R * 2);
+    // winzige Flügel + Körper
     const w = reduce ? .6 : .3 + .7 * Math.abs(Math.sin(t * f.flap + f.i));
-    fctx.strokeStyle = `rgba(255,255,255,${.28 * (.4 + a)})`;
-    fctx.lineWidth = .8;
-    fctx.lineCap = 'round';
+    fctx.globalAlpha = Math.min(1, .28 * (.4 + a));
+    fctx.strokeStyle = '#fff'; fctx.lineWidth = .8; fctx.lineCap = 'round';
     fctx.beginPath();
     fctx.moveTo(x, y); fctx.lineTo(x - 4.5 * s, y - 3.5 * s * w);
     fctx.moveTo(x, y); fctx.lineTo(x + 4.5 * s, y - 3.5 * s * w);
     fctx.stroke();
-
-    fctx.fillStyle = `rgba(255,255,235,${.5 + .5 * a})`;
+    fctx.globalAlpha = Math.min(1, .5 + .5 * a);
+    fctx.fillStyle = '#ffffeb';
     fctx.beginPath(); fctx.arc(x, y, 1.4 * s, 0, TAU); fctx.fill();
-
-    if (!reduce && pulse > .3 && Math.random() < .25) spawn(x, y, f.rgb, 1);
+    fctx.globalAlpha = 1;
+    if (!reduce && pulse > .3 && Math.random() < .12) spawn(x, y, f.rgb, 1);
   }
 
-  function drawDust() {
+  function drawDust(dt) {
     for (let i = dust.length - 1; i >= 0; i--) {
       const d = dust[i];
-      d.x += d.vx; d.y += d.vy; d.vy += .012; d.vx *= .985; d.vy *= .985;
-      d.life -= d.decay;
+      d.x += d.vx * dt; d.y += d.vy * dt; d.vy += .012 * dt; d.vx *= .985; d.vy *= .985;
+      d.life -= d.decay * dt;
       if (d.life <= 0) { dust.splice(i, 1); continue; }
-      const [r, g, b] = d.rgb;
-      const a = d.life * (.6 + .4 * Math.sin(d.p += .25));
-      fctx.fillStyle = `rgba(${r},${g},${b},${a})`;
-      if (d.star) {
-        fctx.strokeStyle = `rgba(255,255,255,${a})`; fctx.lineWidth = .6;
-        const l = d.s * 2.6;
-        fctx.beginPath(); fctx.moveTo(d.x - l, d.y); fctx.lineTo(d.x + l, d.y); fctx.moveTo(d.x, d.y - l); fctx.lineTo(d.x, d.y + l); fctx.stroke();
-      }
-      fctx.beginPath(); fctx.arc(d.x, d.y, d.s, 0, TAU); fctx.fill();
+      d.p += .25 * dt;
+      fctx.globalAlpha = Math.max(0, d.life * (.6 + .4 * Math.sin(d.p)));
+      const R = d.s * 3;
+      fctx.drawImage(glowSprite(d.rgb), d.x - R, d.y - R, R * 2, R * 2);
     }
+    fctx.globalAlpha = 1;
   }
 
-  function drawGlimmers(t) {
+  function drawGlimmers(t, dt) {
     for (const g of glimmers) {
-      g.x += Math.sin(t * g.v + g.p) * .3; g.y += Math.cos(t * g.v * 1.3 + g.p) * .2;
-      const a = Math.max(0, Math.sin(t * g.v * 2 + g.p)) * .7;
-      const [r, gg, b] = g.c;
-      const rad = fctx.createRadialGradient(g.x, g.y, 0, g.x, g.y, 7);
-      rad.addColorStop(0, `rgba(${r},${gg},${b},${a})`); rad.addColorStop(1, `rgba(${r},${gg},${b},0)`);
-      fctx.fillStyle = rad; fctx.beginPath(); fctx.arc(g.x, g.y, 7, 0, TAU); fctx.fill();
+      g.x += Math.sin(t * g.v + g.p) * .3 * dt; g.y += Math.cos(t * g.v * 1.3 + g.p) * .2 * dt;
+      fctx.globalAlpha = Math.max(0, Math.sin(t * g.v * 2 + g.p)) * .7;
+      fctx.drawImage(glowSprite(g.c), g.x - 7, g.y - 7, 14, 14);
     }
+    fctx.globalAlpha = 1;
   }
 
-  // Maus / Finger hinterlässt Feenstaub
+  // Maus / Finger hinterlässt Feenstaub (gedrosselt)
   let lastSpawn = 0;
   addEventListener('pointermove', (e) => {
     const now = performance.now();
-    if (reduce || now - lastSpawn < 16) return;
+    if (reduce || now - lastSpawn < 40) return;
     lastSpawn = now;
-    spawn(e.clientX, e.clientY, [PALETTE.gold.rgb, PALETTE.mint.rgb, PALETTE.violet.rgb][Math.floor(Math.random() * 3)], 2);
+    spawn(e.clientX, e.clientY, [PALETTE.gold.rgb, PALETTE.mint.rgb, PALETTE.violet.rgb][Math.floor(Math.random() * 3)], 1);
   }, { passive: true });
-  addEventListener('pointerdown', (e) => { if (!reduce) spawn(e.clientX, e.clientY, PALETTE.gold.rgb, 34, 3.2); }, { passive: true });
-  window.fairyBurst = (x, y) => spawn(x, y, PALETTE.mint.rgb, 60, 4);
+  addEventListener('pointerdown', (e) => { if (!reduce) spawn(e.clientX, e.clientY, PALETTE.gold.rgb, 28, 3.2); }, { passive: true });
+  window.fairyBurst = (x, y) => spawn(x, y, PALETTE.mint.rgb, 40, 4);
 
-  /* --- Parallaxe --- */
+  /* --- Parallaxe (nur im Startbild, einmal pro Frame) --- */
   const far = document.querySelector('.forest--far');
-  const near = document.querySelector('.forest--near');
   const vision = document.querySelector('.vision');
+  let pTick = false;
   function parallax() {
+    pTick = false;
     const y = scrollY;
     if (y > H * 1.2) return;
-    if (far) far.style.transform = `translateY(${y * .18}px)`;
-    if (vision) vision.style.transform = `translateY(${y * .35}px)`;
+    if (far) far.style.transform = `translate3d(0,${y * .18}px,0)`;
+    if (vision) vision.style.transform = `translate3d(0,${y * .35}px,0)`;
   }
-  addEventListener('scroll', parallax, { passive: true });
+  addEventListener('scroll', () => { if (!pTick) { pTick = true; requestAnimationFrame(parallax); } }, { passive: true });
 
-  /* --- Schleife --- */
+  /* --- Schleife: 30 fps, pausiert bei verstecktem Tab --- */
   const t0 = performance.now();
-  function frame(now) {
+  let last = 0;
+  const STEP = 1000 / 30;
+  function render(now) {
+    const dt = last ? Math.min(3, (now - last) / 16.667) : 1;
+    last = now;
     const t = (now - t0) / 1000;
-    drawSky(t);
     fctx.clearRect(0, 0, W, H);
     fctx.globalCompositeOperation = 'lighter';
-    drawGlimmers(t);
-    fairies.forEach((f) => drawFairy(f, t + 20));
-    drawDust();
+    drawDynamicSky(t, dt);
+    drawGlimmers(t, dt);
+    for (const f of fairies) drawFairy(f, t + 20);
+    drawDust(dt);
     fctx.globalCompositeOperation = 'source-over';
-    if (!reduce) requestAnimationFrame(frame);
   }
-  requestAnimationFrame(frame);
+  if (reduce) {
+    render(performance.now());
+  } else {
+    let raf = 0;
+    const loop = (now) => {
+      raf = requestAnimationFrame(loop);
+      if (now - last >= STEP - 2) render(now);
+    };
+    const start = () => { if (!raf) { last = 0; raf = requestAnimationFrame(loop); } };
+    const stop = () => { cancelAnimationFrame(raf); raf = 0; };
+    document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
+    start();
+  }
 })();
