@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="de" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>BELLI</title>
+  <meta name="description" content="BELLI – Musik aus dem Elfenwald. Jetzt hören auf Spotify, Apple Music &amp; Amazon Music. Videos, Konzerte und Booking.">
+  <meta name="theme-color" content="#03080a">
+  <link rel="canonical" href="https://bellimusik.de/">
+
+  <meta property="og:site_name" content="BELLI">
+  <meta property="og:title" content="BELLI">
+  <meta property="og:description" content="Jetzt hören: feelings, blumenmeer, wolkenlos.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://bellimusik.de/">
+  <meta property="og:image" content="https://bellimusik.de/assets/img/share.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="preload" href="assets/fonts/cormorant-italic-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="assets/css/style.css">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "MusicGroup",
+    "name": "BELLI",
+    "url": "https://bellimusik.de/",
+    "image": "https://bellimusik.de/assets/img/share.jpg",
+    "email": "lm@eskapaden.net",
+    "sameAs": [
+      "https://open.spotify.com/artist/5mP8f62pbhO2GlQI1I4yin",
+      "https://music.apple.com/de/artist/belli/1548826622",
+      "https://music.amazon.de/artists/B0DGY2B14V/belli",
+      "https://www.instagram.com/ohhbelli/",
+      "https://www.tiktok.com/@ohhbelli",
+      "https://www.youtube.com/@ohhbelli"
+    ]
+  }
+  </script>
+  <script>document.documentElement.classList.remove('no-js');</script>
+</head>
+<body>
+  <a class="skip" href="#lauschen">Zum Inhalt springen</a>
+
+  <!-- die Szene: Sternenhimmel, Nebel, Feen -->
+  <canvas id="sky" aria-hidden="true"></canvas>
+  <div class="fog fog--1" aria-hidden="true"></div>
+  <div class="fog fog--2" aria-hidden="true"></div>
+  <canvas id="fx" aria-hidden="true"></canvas>
+
+  <header class="top" id="top">
+    <a href="#wald" aria-label="BELLI – zum Anfang"><img class="top__sig" src="assets/img/signature.webp" alt="" width="70" height="70"></a>
+    <nav class="nav" aria-label="Hauptnavigation">
+      <a href="#lauschen">lauschen</a><i>✦</i>
+      <a href="#visionen">visionen</a><i>✦</i>
+      <a href="#feenkreis">feenkreis</a><i>✦</i>
+      <a href="#botschaft">botschaft</a>
+    </nav>
+  </header>
+
+  <div class="page">
+    <!-- I · Der Wald -->
+    <section class="hero" id="wald" aria-labelledby="belli">
+      <div class="vision" aria-hidden="true">
+        <picture>
+          <source type="image/webp" srcset="assets/img/cover-640.webp 640w, assets/img/cover-1000.webp 1000w, assets/img/cover-1500.webp 1500w" sizes="(max-width: 600px) 130vw, 820px">
+          <img src="assets/img/cover-1000.webp" alt="" width="1000" height="1333" fetchpriority="high">
+        </picture>
+      </div>
+      <canvas class="forest forest--far" data-forest="far" aria-hidden="true"></canvas>
+
+      <div class="hero__inner">
+        <h1 id="belli"><img class="hero__sig" src="assets/img/signature.webp" alt="BELLI" width="360" height="360"></h1>
+        <p class="hero__whisper">jetzt hören</p>
+        <div class="hero__links">
+          <a class="spell" href="https://open.spotify.com/intl-de/artist/5mP8f62pbhO2GlQI1I4yin" target="_blank" rel="noopener"><span>Spotify</span></a>
+          <a class="spell" href="https://music.apple.com/de/artist/belli/1548826622" target="_blank" rel="noopener"><span>Apple Music</span></a>
+          <a class="spell" href="https://www.youtube.com/@ohhbelli" target="_blank" rel="noopener"><span>YouTube</span></a>
+        </div>
+      </div>
+
+      <canvas class="forest forest--near" data-forest="near" aria-hidden="true"></canvas>
+      <div class="hero__ground" data-shrooms="ground" aria-hidden="true"></div>
+      <a class="hero__descend" href="#lauschen">tiefer in den wald<b>↓</b></a>
+    </section>
+
+    <!-- II · Lauschen -->
+    <section class="chapter lauschen" id="lauschen" aria-labelledby="lauschen-t">
+      <div class="chapter__head emerge">
+        <span class="numeral">ii</span>
+        <h2 class="chapter__title" id="lauschen-t">lauschen</h2>
+        <p class="chapter__line">Pflück dir einen Pilz – jeder führt zu BELLI.</p>
+      </div>
+      <div class="meadow">
+        <a class="shroom-link emerge" href="https://open.spotify.com/intl-de/artist/5mP8f62pbhO2GlQI1I4yin" target="_blank" rel="noopener">
+          <span class="shroom" data-shroom="glow:mint;h:200;cap:150;seed:3"></span>
+          <span class="shroom-link__name">Spotify</span><span class="shroom-link__hint">folgen</span>
+        </a>
+        <a class="shroom-link emerge" href="https://music.apple.com/de/artist/belli/1548826622" target="_blank" rel="noopener">
+          <span class="shroom" data-shroom="glow:violet;h:150;cap:120;seed:7"></span>
+          <span class="shroom-link__name">Apple Music</span><span class="shroom-link__hint">anhören</span>
+        </a>
+        <a class="shroom-link emerge" href="https://music.amazon.de/artists/B0DGY2B14V/belli" target="_blank" rel="noopener">
+          <span class="shroom" data-shroom="glow:gold;h:240;cap:110;seed:11"></span>
+          <span class="shroom-link__name">Amazon Music</span><span class="shroom-link__hint">streamen</span>
+        </a>
+        <a class="shroom-link emerge" href="https://www.instagram.com/ohhbelli/" target="_blank" rel="noopener">
+          <span class="shroom" data-shroom="glow:mint;h:130;cap:160;seed:19"></span>
+          <span class="shroom-link__name">Instagram</span><span class="shroom-link__hint">@ohhbelli</span>
+        </a>
+        <a class="shroom-link emerge" href="https://www.tiktok.com/@ohhbelli" target="_blank" rel="noopener">
+          <span class="shroom" data-shroom="glow:violet;h:210;cap:100;seed:23"></span>
+          <span class="shroom-link__name">TikTok</span><span class="shroom-link__hint">@ohhbelli</span>
+        </a>
+        <a class="shroom-link emerge" href="https://www.youtube.com/@ohhbelli" target="_blank" rel="noopener">
+          <span class="shroom" data-shroom="glow:mint;h:170;cap:135;seed:31"></span>
+          <span class="shroom-link__name">YouTube</span><span class="shroom-link__hint">@ohhbelli</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- III · Visionen -->
+    <section class="chapter visionen" id="visionen" aria-labelledby="visionen-t">
+      <div class="chapter__head emerge">
+        <span class="numeral">iii</span>
+        <h2 class="chapter__title" id="visionen-t">visionen</h2>
+        <p class="chapter__line">Die neuesten drei Lichtungen. Tritt hindurch.</p>
+      </div>
+      <div class="portals">
+        <article class="portal emerge">
+          <button class="portal__door" type="button" data-yt="hrWTNBJJOwg" aria-label="Video „kleinstadt (Official Video)“ abspielen">
+            <img src="assets/img/yt-hrWTNBJJOwg.webp" alt="" width="960" height="540" loading="lazy">
+            <span class="portal__play" aria-hidden="true">eintreten</span>
+          </button>
+          <h3 class="portal__title">kleinstadt</h3>
+          <div class="portal__kind">Official Video · feat. schwerelos</div>
+        </article>
+        <article class="portal emerge">
+          <button class="portal__door" type="button" data-yt="YGzzJ1pFFMM" aria-label="Video „heimgehen“ abspielen">
+            <img src="assets/img/yt-YGzzJ1pFFMM.webp" alt="" width="960" height="540" loading="lazy">
+            <span class="portal__play" aria-hidden="true">eintreten</span>
+          </button>
+          <h3 class="portal__title">heimgehen</h3>
+          <div class="portal__kind">Official Video · feat. young hoffi</div>
+        </article>
+        <article class="portal emerge">
+          <button class="portal__door" type="button" data-yt="7nHdG2dKM-U" aria-label="Video „kleinstadt (Musikvideo VLOG)“ abspielen">
+            <img src="assets/img/yt-7nHdG2dKM-U.webp" alt="" width="960" height="540" loading="lazy">
+            <span class="portal__play" aria-hidden="true">eintreten</span>
+          </button>
+          <h3 class="portal__title">kleinstadt vlog</h3>
+          <div class="portal__kind">Musikvideo VLOG</div>
+        </article>
+      </div>
+      <p class="visionen__more emerge">
+        <a class="spell" href="https://www.youtube.com/@ohhbelli" target="_blank" rel="noopener"><span>alle Videos auf YouTube</span></a>
+      </p>
+      <p class="hush emerge" style="text-align:center">Videos werden erst beim Eintreten von YouTube geladen – siehe <a href="datenschutz.html">Datenschutz</a>.</p>
+    </section>
+
+    <!-- IV · Feenkreis -->
+    <section class="chapter feenkreis" id="feenkreis" aria-labelledby="feenkreis-t">
+      <div class="stage" aria-hidden="true">
+        <picture>
+          <source type="image/webp" srcset="assets/img/live-700.webp 700w, assets/img/live-1200.webp 1200w" sizes="(max-width: 860px) 100vw, 55vw">
+          <img src="assets/img/live-700.webp" alt="" width="700" height="1050" loading="lazy">
+        </picture>
+      </div>
+      <div class="chapter__head emerge">
+        <span class="numeral">iv</span>
+        <h2 class="chapter__title" id="feenkreis-t">feenkreis</h2>
+        <p class="chapter__line">Wo BELLI live zu hören ist.</p>
+      </div>
+      <div class="ring emerge" id="ring">
+        <div class="ring__center" id="ring-center">
+          <p>Tritt in den Kreis und ruf die Termine herbei.</p>
+          <button class="spell" type="button" id="summon"><span>Termine rufen</span></button>
+        </div>
+      </div>
+      <div class="live-widget" id="live-widget" hidden></div>
+      <p class="hush">Beim Rufen werden Daten an Bandsintown übertragen (<a href="datenschutz.html">Datenschutz</a>) ·
+        <a href="https://www.bandsintown.com/a/15575670" target="_blank" rel="noopener">auf Bandsintown folgen</a></p>
+    </section>
+
+    <!-- V · Botschaft -->
+    <section class="chapter botschaft" id="botschaft" aria-labelledby="botschaft-t">
+      <div class="emerge">
+        <span class="numeral">v</span>
+        <h2 class="chapter__title" id="botschaft-t">eine botschaft</h2>
+        <p class="chapter__line" style="margin-left:auto;margin-right:auto">Booking, Presse &amp; alles, was der Wind sonst noch tragen soll.</p>
+        <a class="letter" id="letter" href="#botschaft" data-u="lm" data-d="eskapaden.net">lm [at] eskapaden.net</a><br>
+        <button class="spell" type="button" id="copy"><span>Adresse einfangen</span></button>
+      </div>
+    </section>
+  </div>
+
+  <footer class="roots">
+    <canvas class="roots__forest" data-forest="roots" aria-hidden="true"></canvas>
+    <div class="roots__inner">
+      <img class="roots__sig" src="assets/img/signature.webp" alt="BELLI" width="80" height="80" loading="lazy">
+      <nav aria-label="Social Media">
+        <a href="https://open.spotify.com/intl-de/artist/5mP8f62pbhO2GlQI1I4yin" target="_blank" rel="noopener">Spotify</a>
+        <a href="https://music.apple.com/de/artist/belli/1548826622" target="_blank" rel="noopener">Apple Music</a>
+        <a href="https://music.amazon.de/artists/B0DGY2B14V/belli" target="_blank" rel="noopener">Amazon Music</a>
+        <a href="https://www.instagram.com/ohhbelli/" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://www.tiktok.com/@ohhbelli" target="_blank" rel="noopener">TikTok</a>
+        <a href="https://www.youtube.com/@ohhbelli" target="_blank" rel="noopener">YouTube</a>
+      </nav>
+      <nav aria-label="Rechtliches">
+        <span>© <span id="year">2026</span> BELLI</span>
+        <a href="impressum.html">Impressum</a>
+        <a href="datenschutz.html">Datenschutz</a>
+      </nav>
+    </div>
+  </footer>
+
+  <div class="whisper-toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="assets/js/forest.js" defer></script>
+  <script src="assets/js/main.js" defer></script>
+</body>
+</html>
